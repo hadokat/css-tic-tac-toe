@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tic-Tac-Toe Test</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            /* Color Scheme: Ethan Schoonover's Solarized */
+            /* https://ethanschoonover.com/solarized/ */
+
+            /* Light Theme Colors */
+            --solarized-br-white: #fdf6e3;
+            --solarized-br-green: #586e75;
+
+            /* Dark Theme Colors */
+            --solarized-br-black: #002b36;
+            --solarized-br-cyan: #93a1a1;
+
+            /* Highlight & Board Colors */
+            --solarized-red: #dc322f;
+            --solarized-br-magenta: #6c71c4;
+            --solarized-cyan: #2aa198;
+
+            --x-color: var(--solarized-red);
+            --o-color: var(--solarized-cyan);
+            --draw-color: var(--solarized-br-magenta);
+
+            --hl-color: var(--solarized-cyan);
+
+            /* Light Theme */
+            --bg-color: var(--solarized-br-white);
+            --text-color: var(--solarized-br-green);
+
+            /* Dark Theme When Selected By Top-Right Menu */
+            &:has( #colors #dark:checked) {
+                --bg-color: var(--solarized-br-black);
+                --text-color: var(--solarized-br-cyan);
+            }
+        }
+
+        /* When middle button of menu checked, use system colors */
+        @media (prefers-color-scheme: dark) {
+            :root:has( #colors #system:checked) {
+                --bg-color: var(--solarized-br-black);
+                --text-color: var(--solarized-br-cyan);
+            }
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            height: 100vh;
+
+            /* Center board vertically and horizontally */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #colors {
+            --color-menu-padding: 1.5vmin;
+
+            background-color: var(--text-color);
+            padding: var(--color-menu-padding);
+
+            /* Large number forces fully rounded "pill" shape */
+            border-radius: 500px;
+
+            /* Fix Menu to top right */
+            position: fixed;
+            top: var(--color-menu-padding);
+            right: var(--color-menu-padding);
+
+            /* Evenly space buttons */
+            display: flex;
+            align-items: center;
+            gap: var(--color-menu-padding);
+
+            /* On some aspect ratios, menu slightly overlaps board */
+            z-index: 5;
+
+            label {
+                width: 5vmin;
+
+                /* Make buttons perfectly circular */
+                aspect-ratio: 1;
+                border-radius: 500px;
+
+                /* no border shown for non-selected buttons */
+                /* having border keeps button sizing consistent */
+                --border-color: var(--text-color);
+                border: 0.75vmin solid var(--border-color);
+
+                /* Light Theme Button */
+                &[for="light"] { 
+                    background-color: var(--solarized-br-white);
+                }
+                /* System Theme Button */
+                &[for="system"] { 
+                    background-color: var(--solarized-br-white);
+
+                    /* Allows ::after to be positioned absolutely */
+                    position: relative;
+
+                    /* Rounded border hides rectangular ::after */
+                    /* Creates "half-moon" shape */
+                    overflow: hidden;
+
+                    /* Right half of button is dark */
+                    &::after {
+                        background-color: var(--solarized-br-black);
+
+                        /* Force ::after to be displayed */
+                        content: " ";
+
+                        /* Take up right half of button*/
+                        display: block;
+                        position: absolute;
+                        top: 0;
+                        left: 50%;
+                        width: 50%;
+                        height: 100%;
+                    }
+                }
+                /* Dark Theme Button */
+                &[for="dark"] {
+                    background-color: var(--solarized-br-black);
+                }
+            }
+
+            /* Currently selected button highlighted */
+            :checked + label {
+                --border-color: var(--hl-color);
+            }
+        }
+
+        #board {
+            /* Color of the Board Lines & Xs and Os */
+            background-color: var(--text-color);
+            color: var(--text-color);
+
+            /* Allows ::after to be positioned absolutely */
+            position: relative;
+
+            /* Force the squares to be square*/
+            aspect-ratio: 1;
+
+            /* Scale with viewport so whole board always in view */
+            width: 80vmin;
+            font-size: 20vmin;
+            
+            /* 3-by-3 grid for tic-tac-toe board */
+            display: grid;
+            grid-template-rows: repeat(3, 1fr);
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3%;
+
+            /* Switch placing an X or an O with every turn */
+            /* Initially (see below), the label for the "X" checkbox
+             * fills each square, so when clicked, an X is displayed.
+             * The selector here is for an ODD number of checked inputs.
+             * More specifically, it selects the board when the last
+             * checked input is also odd.
+             *
+             * When that's true, the "O" label fills the square, so
+             * an "O" is displayed when clicked, and the boxes switch back.
+             */
+            &:has( > input:nth-last-child(1 of :checked):nth-child(odd of :checked)) {
+                & .square label.x {
+                    z-index: -1;
+                }
+                & .square label.o {
+                    z-index: 1;
+                }
+            }
+        }
+
+        .square {
+            /* Squares colored with background creates "hashtag" pattern */
+            background-color: var(--bg-color);
+
+            /* Allows the labels to be positioned absolutely */
+            position: relative;
+
+            & label {
+                /* Center the ::after (which contains the X or O) */
+                /* vertically and horizontally */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+
+                /* Labels fill whole square */
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }
+
+            /* Initially, the X label is on top */
+            /* so that an "X" is placed on click */
+            & label.x {
+                z-index: 1;
+            }
+            & label.o {
+                z-index: -1;
+            }
+
+            &::after {
+                /* Centers X or O in block */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+
+                /* Fills square */
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+
+                /* Sits above both X and O labels */
+                /* preventing the square from being changed further */
+                z-index: 2;
+            }
+        }
+        /* Show an X */
+        /* X checkboxes precede the squares in the HTML */
+        input[value="x"]:checked + .square::after {
+            content: "X";
+        }
+        /* Show an O */
+        /* X checkboxes succeed the squares in the HTML */
+        .square:has(+ input[value="o"]:checked)::after {
+            content: "O";
+        }
+
+        /* When Player X wins, highlight the winning row/col/diagonal */
+        /* There are 8 selectors in this list, one for each possible win.
+         *
+         * Each of them checks that all the "x" checkboxes in that lane
+         * are checked, or more accurately that none of them are unchecked.
+         *
+         * The selector then selects the squares in the same indices
+         * and changes their text color.
+         */
+
+        /* First Row: Indices 1, 2, 3 */
+        #board:not(:has( > input:not(:checked):nth-child(-n+3 of [value="x"]))) div:nth-child(-n+3 of .square), 
+
+        /* Second Row: Indices 4, 5, 6 */
+        #board:not(:has( > input:not(:checked):nth-child(n+4 of [value="x"]):nth-child(-n+6 of [value="x"]))) div:nth-child(n+4 of .square):nth-child(-n+6 of .square), 
+
+        /* Third Row: Indices 7, 8, 9 */
+        #board:not(:has( > input:not(:checked):nth-child(n+7 of [value="x"]))) div:nth-child(n+7 of .square), 
+
+        /* First Column: Indices 1, 4, 7 */
+        #board:not(:has( > input:not(:checked):nth-child(3n+1 of [value="x"]))) div:nth-child(3n+1 of .square), 
+
+        /* Second Column: Indices 2, 5, 8 */
+        #board:not(:has( > input:not(:checked):nth-child(3n+2 of [value="x"]))) div:nth-child(3n+2 of .square), 
+
+        /* Third Column: Indices 3, 6, 9 */
+        #board:not(:has( > input:not(:checked):nth-child(3n+3 of [value="x"]))) div:nth-child(3n+3 of .square), 
+
+        /* Major Diagonal: Indices 1, 5, 9 */
+        #board:not(:has( > input:not(:checked):nth-child(4n+1 of [value="x"]))) div:nth-child(4n+1 of .square), 
+
+        /* Minor Diagonal: Indices 3, 5, 7 */
+        #board:not(:has( > input:not(:checked):nth-child(2n+3 of [value="x"]):nth-child(-n+7 of [value="x"]))) div:nth-child(2n+3 of .square):nth-child(-n+7 of .square) 
+        {
+            color: var(--x-color);
+        }
+
+        /* This is the same logic as above for Player O Wins */
+        #board:not(:has( > input:not(:checked):nth-child(-n+3 of [value="o"]))) div:nth-child(-n+3 of .square), 
+        #board:not(:has( > input:not(:checked):nth-child(n+4 of [value="o"]):nth-child(-n+6 of [value="o"]))) div:nth-child(n+4 of .square):nth-child(-n+6 of .square), 
+        #board:not(:has( > input:not(:checked):nth-child(n+7 of [value="o"]))) div:nth-child(n+7 of .square), 
+        #board:not(:has( > input:not(:checked):nth-child(3n+1 of [value="o"]))) div:nth-child(3n+1 of .square),
+        #board:not(:has( > input:not(:checked):nth-child(3n+2 of [value="o"]))) div:nth-child(3n+2 of .square), 
+        #board:not(:has( > input:not(:checked):nth-child(3n+3 of [value="o"]))) div:nth-child(3n+3 of .square), 
+        #board:not(:has( > input:not(:checked):nth-child(4n+1 of [value="o"]))) div:nth-child(4n+1 of .square), 
+        #board:not(:has( > input:not(:checked):nth-child(2n+3 of [value="o"]):nth-child(-n+7 of [value="o"]))) div:nth-child(2n+3 of .square):nth-child(-n+7 of .square) 
+        {
+            color: var(--o-color);
+        }
+
+        /* When shown, ::before will cover board and prevent clicks */
+        /* Used when game ends with a win */
+        #board::before {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+        }
+
+        /* When Player X Wins */
+        #board:not(:has( > input:not(:checked):nth-child(-n+3 of [value="x"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(n+4 of [value="x"]):nth-child(-n+6 of [value="x"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(n+7 of [value="x"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(3n+1 of [value="x"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(3n+2 of [value="x"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(3n+3 of [value="x"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(4n+1 of [value="x"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(2n+3 of [value="x"]):nth-child(-n+7 of [value="x"]))) 
+        {
+            /* Show ::before to end game */
+            &::before {
+                content: " ";
+            }
+            /* Display Game-End Message */
+            &::after {
+                content: "X Wins"
+            }
+        }
+        /* Same as above for Player O Wins */
+        #board:not(:has( > input:not(:checked):nth-child(-n+3 of [value="o"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(n+4 of [value="o"]):nth-child(-n+6 of [value="o"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(n+7 of [value="o"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(3n+1 of [value="o"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(3n+2 of [value="o"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(3n+3 of [value="o"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(4n+1 of [value="o"]))), 
+        #board:not(:has( > input:not(:checked):nth-child(2n+3 of [value="o"]):nth-child(-n+7 of [value="o"]))) 
+        {
+            &::before {
+                content: " ";
+            }
+            &::after {
+                content: "O Wins"
+            }
+        }
+
+        /* When Game is a Draw */
+        /* Board must have 9 boxes checked and none of the win conditions */
+        /* This is a single selector that checks whether the board has
+         * at least one unchecked "x" checkbox and at least one unchecked
+         * "o" checkbox in each row, columan, and diagonal.
+         */
+        #board:has( > input:nth-child(9 of :checked)):has( > input:not(:checked):nth-child(-n+3 of [value="x"])):has( > input:not(:checked):nth-child(n+4 of [value="x"]):nth-child(-n+6 of [value="x"])):has( > input:not(:checked):nth-child(n+7 of [value="x"])):has( > input:not(:checked):nth-child(3n+1 of [value="x"])):has( > input:not(:checked):nth-child(3n+2 of [value="x"])):has( > input:not(:checked):nth-child(3n+3 of [value="x"])):has( > input:not(:checked):nth-child(4n+1 of [value="x"])):has( > input:not(:checked):nth-child(2n+3 of [value="x"]):nth-child(-n+7 of [value="x"])):has( > input:not(:checked):nth-child(-n+3 of [value="o"])):has( > input:not(:checked):nth-child(n+4 of [value="o"]):nth-child(-n+6 of [value="o"])):has( > input:not(:checked):nth-child(n+7 of [value="o"])):has( > input:not(:checked):nth-child(3n+1 of [value="o"])):has( > input:not(:checked):nth-child(3n+2 of [value="o"])):has( > input:not(:checked):nth-child(3n+3 of [value="o"])):has( > input:not(:checked):nth-child(4n+1 of [value="o"])):has( > input:not(:checked):nth-child(2n+3 of [value="o"]):nth-child(-n+7 of [value="o"])) {
+            & .square {
+                color: var(--draw-color);
+            }
+            &::after {
+                content: "Draw";
+            }
+        }
+
+        /* Game-End messade under board */
+        #board::after {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            z-index: 4;
+            font-size: 5vmin;
+        }
+    </style>
+</head>
+<body>
+    <!-- Color Scheme Picker Menu Top Right -->
+    <div id="colors">
+        <!-- Light Theme -->
+        <input type="radio" name="scheme" id="light" value="light" hidden>
+        <label for="light"></label>
+
+        <!-- System Theme (Default) -->
+        <input type="radio" name="scheme" id="system" value="system" checked hidden>
+        <label for="system"></label>
+
+        <!-- Dark Theme -->
+        <input type="radio" name="scheme" id="dark" value="dark" hidden>
+        <label for="dark"></label>
+    </div> <!-- End Color Picker Menu -->
+
+    <!-- Tic Tac Toe Board -->
+    <div id="board">
+        <!-- Square 1 -->
+        <input type="radio" name="1" id="x-1" value="x" hidden autocomplete="off">
+        <div class="square">
+            <label for="x-1" class="x"></label>
+            <label for="o-1" class="o"></label>
+        </div>
+        <input type="radio" name="1" id="o-1" value="o" hidden autocomplete="off">
+
+        <!-- Square 2 -->
+        <input type="radio" name="2" id="x-2" value="x" hidden autocomplete="off">
+        <div class="square">
+            <label for="x-2" class="x"></label>
+            <label for="o-2" class="o"></label>
+        </div>
+        <input type="radio" name="2" id="o-2" value="o" hidden autocomplete="off">
+
+        <!-- Square 3 -->
+        <input type="radio" name="3" id="x-3" value="x" hidden autocomplete="off">
+        <div class="square">
+            <label for="x-3" class="x"></label>
+            <label for="o-3" class="o"></label>
+        </div>
+        <input type="radio" name="3" id="o-3" value="o" hidden autocomplete="off">
+
+        <!-- Square 4 -->
+        <input type="radio" name="4" id="x-4" value="x" hidden autocomplete="off">
+        <div class="square">
+            <label for="x-4" class="x"></label>
+            <label for="o-4" class="o"></label>
+        </div>
+        <input type="radio" name="4" id="o-4" value="o" hidden autocomplete="off">
+
+        <!-- Square 5 -->
+        <input type="radio" name="5" id="x-5" value="x" hidden autocomplete="off">
+        <div class="square">
+            <label for="x-5" class="x"></label>
+            <label for="o-5" class="o"></label>
+        </div>
+        <input type="radio" name="5" id="o-5" value="o" hidden autocomplete="off">
+
+        <!-- Square 6 -->
+        <input type="radio" name="6" id="x-6" value="x" hidden autocomplete="off">
+        <div class="square">
+            <label for="x-6" class="x"></label>
+            <label for="o-6" class="o"></label>
+        </div>
+        <input type="radio" name="6" id="o-6" value="o" hidden autocomplete="off">
+
+        <!-- Square 7 -->
+        <input type="radio" name="7" id="x-7" value="x" hidden autocomplete="off">
+        <div class="square">
+            <label for="x-7" class="x"></label>
+            <label for="o-7" class="o"></label>
+        </div>
+        <input type="radio" name="7" id="o-7" value="o" hidden autocomplete="off">
+
+        <!-- Square 8 -->
+        <input type="radio" name="8" id="x-8" value="x" hidden autocomplete="off">
+        <div class="square">
+            <label for="x-8" class="x"></label>
+            <label for="o-8" class="o"></label>
+        </div>
+        <input type="radio" name="8" id="o-8" value="o" hidden autocomplete="off">
+
+        <!-- Square 9 -->
+        <input type="radio" name="9" id="x-9" value="x" hidden autocomplete="off">
+        <div class="square">
+            <label for="x-9" class="x"></label>
+            <label for="o-9" class="o"></label>
+        </div>
+        <input type="radio" name="9" id="o-9" value="o" hidden autocomplete="off">
+    </div> <!-- End Board -->
+</body>
+</html>
