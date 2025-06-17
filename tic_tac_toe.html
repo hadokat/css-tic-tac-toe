@@ -88,9 +88,6 @@
             label {
                 width: 5vmin;
 
-                /* Allows z-index to work */
-                position: relative;
-
                 /* Make buttons perfectly circular */
                 aspect-ratio: 1;
                 border-radius: 500px;
@@ -192,6 +189,9 @@
             position: relative;
 
             & label {
+                /* Allows z-index to work */
+                position: relative;
+
                 /* Center the ::after (which contains the X or O) */
                 /* vertically and horizontally */
                 display: flex;
