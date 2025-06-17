@@ -172,7 +172,6 @@
              * an "O" is displayed when clicked, and the boxes switch back.
              */
             &:has( > input:nth-last-child(1 of :checked):nth-child(odd of :checked)) {
-                background-color: pink;
                 & .square label.x {
                     /*z-index: -1;*/
                     display: none;
@@ -192,9 +191,6 @@
             position: relative;
 
             & label {
-                /* Allows z-index to work */
-                position: relative;
-
                 /* Center the ::after (which contains the X or O) */
                 /* vertically and horizontally */
                 display: flex;
