@@ -173,10 +173,12 @@
              */
             &:has( > input:nth-last-child(1 of :checked):nth-child(odd of :checked)) {
                 & .square label.x {
-                    z-index: -1;
+                    /*z-index: -1;*/
+                    display: none;
                 }
                 & .square label.o {
-                    z-index: 1;
+                    /*z-index: 1;*/
+                    display: flex;
                 }
             }
         }
@@ -210,10 +212,12 @@
             /* Initially, the X label is on top */
             /* so that an "X" is placed on click */
             & label.x {
-                z-index: 1;
+                /*z-index: 1;*/
+                display: flex;
             }
             & label.o {
-                z-index: -1;
+                /*z-index: -1;*/
+                display: none;
             }
 
             &::after {
